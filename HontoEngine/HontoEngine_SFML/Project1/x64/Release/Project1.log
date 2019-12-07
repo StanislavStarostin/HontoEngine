@@ -1,0 +1,17 @@
+﻿  main.cpp
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:  'argument': conversion from 'unsigned int' to 'T', possible loss of data
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         with
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         [
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:             T=float
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         ]
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:  'argument': conversion from 'unsigned int' to 'T', possible loss of data
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         with
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         [
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:             T=float
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         ]
+  Generating code
+  0 of 7 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  Project1.vcxproj -> C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\x64\Release\Project1.exe

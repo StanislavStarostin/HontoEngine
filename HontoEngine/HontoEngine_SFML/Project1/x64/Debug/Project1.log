@@ -1,0 +1,12 @@
+﻿  main.cpp
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:  'argument': conversion from 'unsigned int' to 'T', possible loss of data
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         with
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         [
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:             T=float
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,53): warning C4244:         ]
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:  'argument': conversion from 'unsigned int' to 'T', possible loss of data
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         with
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         [
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:             T=float
+C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\Project1\main.cpp(12,40): warning C4244:         ]
+  Project1.vcxproj -> C:\Users\slavagrishanin\Desktop\HontoEngine\HontoEngine_SFML\x64\Debug\Project1.exe
