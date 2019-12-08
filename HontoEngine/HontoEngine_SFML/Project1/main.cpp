@@ -1,14 +1,110 @@
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 // header ///////////////
 inline void viewResize(sf::View& view, sf::RenderWindow& window, unsigned int& height, unsigned int& width);
+
+class Program;
+
+class DynamicBox
+{
+public:
+	friend Program;
+
+	sf::RectangleShape shape;
+	float speed;
+
+	std::vector<DynamicBox>* interactiveDynamicBoxes;
+
+	DynamicBox* getThisConst()
+	{
+		return this;
+	}
+	bool checkCollision()
+	{
+		//for(int i = 0; i < interactiveDynamicBoxes->size(); i++)
+			//if( shape.getGlobalBounds().intersects( interactiveDynamicBoxes[i]. ) ) ???
+
+		for (std::vector<DynamicBox>::iterator iter = interactiveDynamicBoxes->begin(); iter < interactiveDynamicBoxes->end(); iter++)
+			if (this != iter->getThisConst() and shape.getGlobalBounds().intersects(iter->shape.getGlobalBounds()))
+				return true;
+		return false;
+	}
+
+	DynamicBox(sf::RectangleShape sh, float sp, std::vector<DynamicBox>* idb) : shape(sh), speed(sp), interactiveDynamicBoxes(idb)
+	{ }
+	void shift(sf::Vector2f dest)
+	{
+		float lastX = shape.getPosition().x;
+		float lastY = shape.getPosition().y;
+
+		float xScalar = (dest.x - shape.getSize().x/2) - shape.getPosition().x;
+		float yScalar = (dest.y - shape.getSize().y/2) - shape.getPosition().y;
+		float divider = sqrt(xScalar * xScalar + yScalar * yScalar) / speed;
+
+		if (divider == 0 or abs((dest.x - shape.getSize().x/2) - shape.getPosition().x + xScalar / divider) < speed*2 and abs((dest.y - shape.getSize().y/2) - shape.getPosition().y + yScalar / divider) < speed*2) // shit
+		{
+			shape.setPosition((dest.x - shape.getSize().x/2), (dest.y - shape.getSize().y/2));
+		}
+		else
+		{
+			shape.setPosition(shape.getPosition().x + xScalar / divider, shape.getPosition().y + yScalar / divider);
+		}
+
+		if (checkCollision())
+		{
+			shape.setPosition( lastX, lastY);
+		}
+		
+		/*
+		std::cout << "dest: " << dest.x << "; " << dest.y << std::endl;
+		std::cout << "curr: " << shape.getPosition().x << "; " << shape.getPosition().y << std::endl;
+		*/
+	}
+};
+
+class Program
+{
+public:
+	std::vector<float> posesVec;
+	unsigned int destID;
+	bool looped;
+	std::string collisionEventName;
+	DynamicBox* body;
+
+	Program(std::vector<float> pv, DynamicBox* b, std::string cen) : posesVec(pv), body(b), destID(0), looped(true), collisionEventName(cen)
+	{ }
+
+	void move()
+	{
+		if (collisionEventName == "stop")
+		{
+			if (body->shape.getPosition().x + body->shape.getSize().x / 2 == posesVec[destID] and body->shape.getPosition().y + body->shape.getSize().y / 2 == posesVec[destID + 1])
+				destID += 2;
+			if (destID >= posesVec.size())
+				if (looped)
+					destID %= posesVec.size();
+				else
+					return;
+			body->shift(sf::Vector2f(posesVec[destID], posesVec[destID + 1]));
+			return;
+		}
+		if (collisionEventName == "bounceOf")
+		{
+			// CONTINUE HERE
+		}
+
+	}
+
+};
 /////////////////////////
 
 int main()
 {
-	unsigned int windowWidth = 1280, windowHeight = 720;
+	unsigned int windowWidth = 1280, windowHeight = 720; // coords
+	unsigned int playerId = 0;
 
-	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML works!"/*, sf::Style::Fullscreen*/);
+	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "HONTO?"/*, sf::Style::Fullscreen*/);
 	sf::View view(sf::FloatRect(0.f, 0.f, windowWidth, windowHeight));
 	window.setView(view);
 
@@ -19,14 +115,39 @@ int main()
 	
 	//window.setView(view); 
 	
-	sf::RectangleShape shape(sf::Vector2f(1600, 900));
-	shape.setFillColor(sf::Color::Green);
+	sf::RectangleShape shape(sf::Vector2f(windowWidth, windowHeight));
+	shape.setFillColor(sf::Color::Yellow);
+
 	sf::CircleShape shape2(100.f);
 	shape2.setFillColor(sf::Color::Red); 
 
+	sf::RectangleShape boxShape(sf::Vector2f(50, 50));
+	boxShape.setFillColor(sf::Color::Green);
+
+	std::vector<DynamicBox> levelsDynamicBoxes;
+	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 0.5, &levelsDynamicBoxes));
+
+	boxShape.setFillColor(sf::Color::Magenta);
+	boxShape.setPosition(50, 500);
+	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 0.5, &levelsDynamicBoxes));
+
+	std::vector<float> prog1_posesVec;
+
+	prog1_posesVec.push_back(600);
+	prog1_posesVec.push_back(300);
+
+	prog1_posesVec.push_back(50);
+	prog1_posesVec.push_back(50);
+
+	prog1_posesVec.push_back(900);
+	prog1_posesVec.push_back(50);
+
+	Program prog1(prog1_posesVec, &levelsDynamicBoxes.back(), "stop");
+	//delete prog1_posesVec;
+
 	while (window.isOpen())
 	{
-		sf::Event event;
+		sf::Event event; 
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
@@ -41,10 +162,47 @@ int main()
 				break;
 			}
 		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Z))
+		{
+			view.zoom(0.998f);
+			window.setView(view);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::X))
+		{
+			view.zoom(1.002f);
+			window.setView(view);
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+		{
+			levelsDynamicBoxes[playerId].shift(sf::Vector2f(levelsDynamicBoxes[playerId].shape.getPosition().x + levelsDynamicBoxes[playerId].shape.getSize().x, levelsDynamicBoxes[playerId].shape.getPosition().y + levelsDynamicBoxes[playerId].shape.getSize().y/2 ));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+		{
+			levelsDynamicBoxes[playerId].shift(sf::Vector2f(levelsDynamicBoxes[playerId].shape.getPosition().x - levelsDynamicBoxes[playerId].shape.getSize().x, levelsDynamicBoxes[playerId].shape.getPosition().y + levelsDynamicBoxes[playerId].shape.getSize().y / 2));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+		{
+			levelsDynamicBoxes[playerId].shift(sf::Vector2f(levelsDynamicBoxes[playerId].shape.getPosition().x + levelsDynamicBoxes[playerId].shape.getSize().x / 2, levelsDynamicBoxes[playerId].shape.getPosition().y - levelsDynamicBoxes[playerId].shape.getSize().y));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+		{
+			levelsDynamicBoxes[playerId].shift(sf::Vector2f(levelsDynamicBoxes[playerId].shape.getPosition().x + levelsDynamicBoxes[playerId].shape.getSize().x / 2, levelsDynamicBoxes[playerId].shape.getPosition().y + levelsDynamicBoxes[playerId].shape.getSize().y));
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+		{	
+			levelsDynamicBoxes[playerId].shift( window.mapPixelToCoords(sf::Mouse::getPosition(window)) );
+		}
 
 		window.clear();
 		window.draw(shape);
 		window.draw(shape2);
+
+		for(int i = 0; i < levelsDynamicBoxes.size(); i++)
+			window.draw(levelsDynamicBoxes[i].shape);
+
+		
+		prog1.move();
+
 		window.display();
 	}
 
