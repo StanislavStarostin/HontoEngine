@@ -8,6 +8,8 @@ class Program;
 
 class DynamicBox
 {
+private:
+	float lastX, lastY, xScalar, yScalar; // for bounceOf Program
 public:
 	friend Program;
 
@@ -35,14 +37,14 @@ public:
 	{ }
 	void shift(sf::Vector2f dest)
 	{
-		float lastX = shape.getPosition().x;
-		float lastY = shape.getPosition().y;
+		lastX = shape.getPosition().x;
+		lastY = shape.getPosition().y;
 
-		float xScalar = (dest.x - shape.getSize().x/2) - shape.getPosition().x;
-		float yScalar = (dest.y - shape.getSize().y/2) - shape.getPosition().y;
+		xScalar = (dest.x - shape.getSize().x/2) - shape.getPosition().x;
+		yScalar = (dest.y - shape.getSize().y/2) - shape.getPosition().y;
 		float divider = sqrt(xScalar * xScalar + yScalar * yScalar) / speed;
 
-		if (divider == 0 or abs((dest.x - shape.getSize().x/2) - shape.getPosition().x + xScalar / divider) < speed*2 and abs((dest.y - shape.getSize().y/2) - shape.getPosition().y + yScalar / divider) < speed*2) // shit
+		if (divider == 0 or abs((dest.x - shape.getSize().x/2) - shape.getPosition().x + xScalar / divider) < speed*2 and abs((dest.y - shape.getSize().y/2) - shape.getPosition().y + yScalar / divider) < speed*2) // shit speed*2 
 		{
 			shape.setPosition((dest.x - shape.getSize().x/2), (dest.y - shape.getSize().y/2));
 		}
@@ -53,9 +55,15 @@ public:
 
 		if (checkCollision())
 		{
-			shape.setPosition( lastX, lastY);
+			shape.setPosition(lastX, lastY);
+			float ms = 0;
+			do
+			{
+				ms+=0.5;
+				divider = sqrt(xScalar * xScalar + yScalar * yScalar) / (speed - ms);				
+				shape.setPosition(lastX + xScalar / divider, lastY + yScalar / divider);
+			} while (checkCollision());
 		}
-		
 		/*
 		std::cout << "dest: " << dest.x << "; " << dest.y << std::endl;
 		std::cout << "curr: " << shape.getPosition().x << "; " << shape.getPosition().y << std::endl;
@@ -123,13 +131,14 @@ int main()
 
 	sf::RectangleShape boxShape(sf::Vector2f(50, 50));
 	boxShape.setFillColor(sf::Color::Green);
+	boxShape.setPosition(-100, -100);
 
 	std::vector<DynamicBox> levelsDynamicBoxes;
-	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 0.5, &levelsDynamicBoxes));
+	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 1, &levelsDynamicBoxes));
 
 	boxShape.setFillColor(sf::Color::Magenta);
 	boxShape.setPosition(50, 500);
-	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 0.5, &levelsDynamicBoxes));
+	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 1, &levelsDynamicBoxes));
 
 	std::vector<float> prog1_posesVec;
 
