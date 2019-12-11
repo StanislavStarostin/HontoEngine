@@ -3,6 +3,14 @@
 #include <list>
 
 // header ///////////////
+inline bool segmentIntersectSegment(float a, float b, float c, float d)
+{
+	return
+		(c >= a and c <= b)
+		or
+		(d >= a and d <= b);
+}
+
 inline void viewResize(sf::View& view, sf::RenderWindow& window, unsigned int& height, unsigned int& width);
 
 class Program;
@@ -11,6 +19,10 @@ class DynamicBox
 {
 private:
 	float lastX, lastY, xScalar, yScalar; // for bounceOf Program
+	
+	// CONTINUE HERE // std::vector< std::string > groups;
+
+	DynamicBox* collidedBox;
 public:
 	friend Program;
 
@@ -30,14 +42,20 @@ public:
 
 		for (std::list<DynamicBox>::iterator iter = interactiveDynamicBoxes->begin(); iter != interactiveDynamicBoxes->end(); iter++)
 			if (this != iter->getThisConst() and shape.getGlobalBounds().intersects(iter->shape.getGlobalBounds()))
+			{
+				collidedBox = &(*iter);
 				return true;
+			}
+				
 		return false;
 	}
 
 	DynamicBox(sf::RectangleShape sh, float sp, std::list<DynamicBox>* idb) : shape(sh), speed(sp), interactiveDynamicBoxes(idb)
 	{ }
-	void shift(sf::Vector2f dest)
+	void shift(sf::Vector2f dest, float speed = -1)
 	{
+		if (speed == -1)
+			speed = this->speed;
 		lastX = shape.getPosition().x;
 		lastY = shape.getPosition().y;
 
@@ -63,7 +81,7 @@ public:
 				float ms = 0;
 				do
 				{
-					ms += 0.5;
+					ms += 0.5; // try change 0.5 to 1?
 					divider = sqrt(xScalar * xScalar + yScalar * yScalar) / (speed - ms);
 					shape.setPosition(lastX + xScalar / divider, lastY + yScalar / divider);
 				} while (checkCollision());
@@ -90,7 +108,10 @@ public:
 
 	void move()
 	{
-		if (collisionEventName == "stop")
+
+		static float fuckCoef = 10.f;
+
+		if (collisionEventName == "stop" or collisionEventName == "stop_budge") // follow posses // must follow BEFORE body->shift()
 		{
 			if (body->shape.getPosition().x + body->shape.getSize().x / 2 == posesVec[destID] and body->shape.getPosition().y + body->shape.getSize().y / 2 == posesVec[destID + 1])
 				destID += 2;
@@ -99,18 +120,91 @@ public:
 					destID %= posesVec.size();
 				else
 					return;
-			body->shift(sf::Vector2f(posesVec[destID], posesVec[destID + 1]));
-			return;
+			//return;
 		}
-		if (collisionEventName == "bounceOf")
+
+//define conditionals as macross
+
+		body->shift(sf::Vector2f(posesVec[destID], posesVec[destID + 1]));
+
+		if (collisionEventName == "stop_budge") // recursion function until stop // must follow AFTER body->shift()
 		{
-			// CONTINUE HERE
+			if 
+			(
+				body->lastX == body->shape.getPosition().x and body->lastY == body->shape.getPosition().y
+				and
+				not( body->shape.getPosition().x + body->shape.getSize().x / 2 == posesVec[destID] and body->shape.getPosition().y + body->shape.getSize().y / 2 == posesVec[destID + 1] )
+			)
+			{
+				body->collidedBox->shift(sf::Vector2f
+											(body->collidedBox->shape.getPosition().x + body->collidedBox->shape.getSize().x / 2 + body->xScalar, 
+											 body->collidedBox->shape.getPosition().y + body->collidedBox->shape.getSize().y / 2 + body->yScalar), 
+											 body->speed);
+
+//RECURSIVE FUNCTION CALL FOR ..->collidedBox->collidedBox UNTIL groups == "blockable" MUST BE HERE
+
+				return;
+			}
 		}
-		if (collisionEventName == "budge")
+
+		if (collisionEventName == "bounceOf") //incompatible with stop and budge // must follow AFTER body->shift()
+		{
+			//body->shift(sf::Vector2f(posesVec[0], posesVec[1]));
+			
+			if (body->shape.getPosition().x + body->shape.getSize().x/2 == posesVec[0] and body->shape.getPosition().y + body->shape.getSize().y/2 == posesVec[1])
+			{
+				float xScalar = (body->shape.getPosition().x - body->lastX) * fuckCoef, // fuckCoef - there was a problem here and I did not know how to solve it
+					  yScalar = (body->shape.getPosition().y - body->lastY) * fuckCoef;
+				fuckCoef *= 100.f;
+				posesVec[0] = body->shape.getPosition().x + body->shape.getSize().x / 2 + xScalar;
+				posesVec[1] = body->shape.getPosition().y + body->shape.getSize().y / 2 + yScalar;
+			}
+
+			if (body->lastX == body->shape.getPosition().x and body->lastY == body->shape.getPosition().y)
+			{
+				if
+					(
+						segmentIntersectSegment
+						(
+							body->collidedBox->shape.getPosition().y, body->collidedBox->shape.getPosition().y + body->collidedBox->shape.getSize().y,
+							body->shape.getPosition().y, body->shape.getPosition().y + body->shape.getSize().y
+						)
+						and
+						(
+							abs((body->collidedBox->shape.getPosition().x + body->collidedBox->shape.getSize().x) - body->shape.getPosition().x) < 1
+							or
+							abs(body->collidedBox->shape.getPosition().x - (body->shape.getPosition().x + body->shape.getSize().x)) < 1
+						)
+					)
+					posesVec[0] = body->shape.getPosition().x + body->shape.getSize().x / 2 - body->xScalar;
+
+				if
+				(
+					segmentIntersectSegment
+					(
+						body->collidedBox->shape.getPosition().x, body->collidedBox->shape.getPosition().x + body->collidedBox->shape.getSize().x,
+						body->shape.getPosition().x, body->shape.getPosition().x + body->shape.getSize().x
+					)
+					and 
+				    (
+						abs((body->collidedBox->shape.getPosition().y + body->collidedBox->shape.getSize().y) - body->shape.getPosition().y) < 1
+						or
+						abs(body->collidedBox->shape.getPosition().y - (body->shape.getPosition().y + body->shape.getSize().y)) < 1
+					)
+				)
+					posesVec[1] = body->shape.getPosition().y + body->shape.getSize().y / 2 - body->yScalar;	
+			}
+			
+		}
+		if (collisionEventName == "activate") // by this
 		{
 			// ...
 		}
-		if (collisionEventName == "activate") // by this
+		if (collisionEventName == "giveAction") 
+		{
+			// ... 
+		}
+		if (collisionEventName == "getAction") 
 		{
 			// ... 
 		}
@@ -147,14 +241,14 @@ int main()
 	boxShape.setOutlineThickness(-3);
 
 	boxShape.setFillColor(sf::Color::Magenta);
-	boxShape.setPosition(-100, -100);
+	boxShape.setPosition(200, 700);
 
 	std::list<DynamicBox> levelsDynamicBoxes;
 	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 1, &levelsDynamicBoxes));
 
 	boxShape.setFillColor(sf::Color::Green);
 	boxShape.setPosition(50, 500);
-	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 1, &levelsDynamicBoxes));
+//levelsDynamicBoxes.push_back(DynamicBox(boxShape, 1, &levelsDynamicBoxes));
 
 
 
@@ -163,18 +257,18 @@ int main()
 	prog1_posesVec.push_back(600);
 	prog1_posesVec.push_back(300);
 
-	prog1_posesVec.push_back(50);
-	prog1_posesVec.push_back(50);
+	//prog1_posesVec.push_back(50);
+	//prog1_posesVec.push_back(50);
 
-	prog1_posesVec.push_back(900);
-	prog1_posesVec.push_back(50);
+	//prog1_posesVec.push_back(900);
+	//prog1_posesVec.push_back(50);
 
-	Program prog1(prog1_posesVec, &levelsDynamicBoxes.back(), "stop");
+//Program prog1(prog1_posesVec, &levelsDynamicBoxes.back(), "stop");
 
-	boxShape.setPosition(500, 500);
+	boxShape.setPosition(200, 900);
 	levelsDynamicBoxes.push_back(DynamicBox(boxShape, 0.1, &levelsDynamicBoxes));
 
-	Program prog2(prog1_posesVec, &levelsDynamicBoxes.back(), "stop");
+	Program prog2(prog1_posesVec, &levelsDynamicBoxes.back(), "stop_budge");
 
 	boxShape.setPosition(1000, 600);
 
@@ -228,6 +322,7 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 		{
 			levelsDynamicBoxes.front().shift(sf::Vector2f(levelsDynamicBoxes.front().shape.getPosition().x + levelsDynamicBoxes.front().shape.getSize().x, levelsDynamicBoxes.front().shape.getPosition().y + levelsDynamicBoxes.front().shape.getSize().y / 2));
+// change shift to move	
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 		{
@@ -244,6 +339,10 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
 		{
 			levelsDynamicBoxes.front().shift(window.mapPixelToCoords(sf::Mouse::getPosition(window)));
+			/*
+			view.setCenter(levelsDynamicBoxes.front().shape.getPosition().x + levelsDynamicBoxes.front().shape.getSize().x / 2, levelsDynamicBoxes.front().shape.getPosition().y + levelsDynamicBoxes.front().shape.getSize().y / 2);
+			window.setView(view);
+			*/
 		}
 
 		window.clear();
@@ -254,7 +353,7 @@ int main()
 		for(std::list<DynamicBox>::iterator iter = levelsDynamicBoxes.begin(); iter != levelsDynamicBoxes.end(); iter++)
 			window.draw(iter -> shape);
 
-		prog1.move();
+//prog1.move();
 		prog2.move();
 
 		window.display();
